@@ -66,8 +66,23 @@
 5. 为什么这样设计？（解耦安全与逻辑）
 这种模式被称为声明式校验。
 
-# 'info 
+# 'info 作用
 'info 被称为 生命周期标注 (Lifetime Annotation)。
 也可以用'a来替换或着'b?
 
 简单来说，它的作用是告诉 Rust 编译器：“这些账户引用的有效时间，必须和这笔交易（Transaction）的生命周期一样长。”
+
+# #[program]的作用
+
+#[program] 宏是整个智能合约的入口点。#[program] 宏会将下面的模块标记为 Solana 程序
+
+1. #[program] 的三大核心功能
+
+A. 路由分发 (Instruction Dispatching)
+Solana 链上接收到的指令（Instruction）其实是原始的二进制字节。#[program] 宏会自动生成一段底层的路由代码，解析这些字节，并根据指令名称将请求分发给你定义的具体函数（如 initialize 或 transfer）。
+
+B. 自动反序列化参数
+除了账户外，指令通常还会带一些参数（比如 amount: u64）。#[program] 会自动处理这些参数的 Borsh 反序列化，让你在函数签名中直接使用 Rust 类型，而不需要手动解析字节流。
+
+C. 自动封装上下文 (Context)
+它会将传入的账户信息自动打包进 Context<T> 中。你在函数里通过 ctx.accounts 访问到的那些账户，都是由这个宏在背后完成匹配和装载的。
