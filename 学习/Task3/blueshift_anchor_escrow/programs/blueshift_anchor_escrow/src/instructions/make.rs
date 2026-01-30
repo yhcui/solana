@@ -54,3 +54,43 @@ pub struct Make<'info>{
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info,System>,
 }
+
+impl<'info> Make<'info> {
+     pub fn populate_escrow(&mut self,seed:u64, receive: u64,bump:u8) -> Result<()> {
+        self.escrow.seed = seed;
+        self.escrow.maker =  self.maker.key();
+        self.sescrow.mint_a = self.mint_a.key();
+        self.escrow.mint_b = self.mint_b.key();
+        self.escrow.receive = receive;
+        self.escrow.bump = bump;
+        Ok(())
+     }
+
+     pub fn deposit_tokens(&mut self, amount: u64) -> Result<()> {
+       transfer_checked(
+            CpiContext::new(
+                self.token_program.to_account_info(),
+                TransferChecked {
+                    from: self.maker_ata_a.to_account_info(),
+                    mint: self.mint_a.to_account_info(),
+                    to: self.vault.to_account_info(),
+                    authority: self.maker.to_account_info(),
+                },
+            ),
+            amount,
+            self.mint_a.decimals,
+        )?;
+        Ok(())
+
+     }
+}
+
+pub fn  handler(ctx: Context<Make>, seed:u64, receive: u64, amount: u64) -> Result<()> {
+    require_gt!(receive >0, EscrowError::InvalidAmount);
+    require_gt!(amount >0, EscrowError::InvalidAmount);
+
+    ctx.accounts.populate_escrow(seed, receive, ctx.bumps.escrow)?;
+    ctx.accounts.deposit_tokens(amount)?;
+    Ok(())
+
+}
