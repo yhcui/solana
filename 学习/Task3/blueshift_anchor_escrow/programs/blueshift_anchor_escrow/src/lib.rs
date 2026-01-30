@@ -12,7 +12,7 @@ pub mod blueshift_anchor_escrow {
 
     #[instruction(discriminator = 0)]
     pub fn make(ctx: Context<Make>, seed:u64, receive: u64, amount: u64) -> Result<()> {
-        Ok(())
+        instructions::make::handler(ctx, seed, receive, amount)
     }
 
     #[instruction(discriminator = 1)]
