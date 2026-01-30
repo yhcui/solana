@@ -11,7 +11,7 @@ pub mod blueshift_anchor_escrow {
     use super::*;
 
     #[instruction(discriminator = 0)]
-    pub fn make(ctx: Context<Make>, seed:u 64, receive: u64, amount: u64) -> Result<()> {
+    pub fn make(ctx: Context<Make>, seed:u64, receive: u64, amount: u64) -> Result<()> {
         Ok(())
     }
 
