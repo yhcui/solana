@@ -17,7 +17,7 @@ pub mod blueshift_anchor_escrow {
 
     #[instruction(discriminator = 1)]
     pub fn take(ctx: Context<Take>) -> Result<()> {
-        Ok(())
+        instructions::take::handler(ctx)
     }
 
     pub fn refund(ctx: Context<Refund>) -> Result<()> {

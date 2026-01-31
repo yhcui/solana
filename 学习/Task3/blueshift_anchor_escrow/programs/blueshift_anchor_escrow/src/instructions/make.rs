@@ -11,7 +11,7 @@ use crate::{
     state::{Escrow},
 };
 
-#[derive(Account)]
+#[derive(Accounts)]
 #[instruction(seed: u64)]
 pub struct Make<'info>{
     #[account(mut)]
@@ -24,9 +24,8 @@ pub struct Make<'info>{
         bump,
     )]
     pub escrow: Account<'info,Escrow>,
-
     #[account(
-        mint:token_program = token_program
+        mint::token_program = token_program
     )]
     pub mint_a: InterfaceAccount<'info,Mint>,
     #[accout(
@@ -86,8 +85,8 @@ impl<'info> Make<'info> {
 }
 
 pub fn  handler(ctx: Context<Make>, seed:u64, receive: u64, amount: u64) -> Result<()> {
-    require_gt!(receive >0, EscrowError::InvalidAmount);
-    require_gt!(amount >0, EscrowError::InvalidAmount);
+    require_gt!(receive, 0, EscrowError::InvalidAmount);
+    require_gt!(amount , 0, EscrowError::InvalidAmount);
 
     ctx.accounts.populate_escrow(seed, receive, ctx.bumps.escrow)?;
     ctx.accounts.deposit_tokens(amount)?;
