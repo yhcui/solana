@@ -6,7 +6,6 @@ use anchor_spl::{
         TransferChecked,
     },
 };
-
 use crate::{
     errors::EscrowError,
     state::{Escrow},
@@ -15,7 +14,7 @@ use crate::{
 #[derive(Accounts)]
 pub struct Take<'info> {
     #[account(mut)]
-    pub taker: Singer<'info>,
+    pub taker: Signer<'info>,
     #[account(mut)]
     pub maker: SystemAccount<'info>,
     #[account(
@@ -26,21 +25,17 @@ pub struct Take<'info> {
         has_one =  maker @ EscrowError::InvalidMaker,
         has_one = mint_a @ EscrowError::InvalidMintA,
         has_one = mint_b @ EscrowError::InvalidMintB,
-
     )]
     pub escrow: Box<Account<'info,Escrow>>,
 
     pub mint_a: Box<InterfaceAccount<'info,Mint>>,
-
     pub mint_b: Box<InterfaceAccount<'info,Mint>>,
-
     #[account(
         mut,
         associated_token::mint =  mint_a,
         associated_token::authority = escrow,
         associated_token::token_program = token_program
-    )
-    ]
+    )]
     pub vault: Box<InterfaceAccount<'info, TokenAccount>>,
     #[account(
         init_if_needed,
@@ -57,6 +52,15 @@ pub struct Take<'info> {
         associated_token::token_program = token_program
     )]
     pub taker_ata_b: Box<InterfaceAccount<'info,TokenAccount>>,
+
+    #[account(
+        init_if_needed,
+        payer=taker,
+        associated_token::mint = mint_b,
+        associated_token::authority = maker,
+        associated_token::token_program = token_program
+    )]
+    pub maker_ata_b: Box<InterfaceAccount<'info,TokenAccount>>,
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info,System>, 

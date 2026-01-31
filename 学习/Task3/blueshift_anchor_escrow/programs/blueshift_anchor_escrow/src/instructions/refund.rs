@@ -21,8 +21,8 @@ pub struct Refund<'info> {
         close =  maker,
         seeds = [ESCROW_SEED, maker.key().as_ref(),escrow.seed.to_le_bytes().as_ref()],
         bump = escrow.bump,
-        has_one = make @ EscrowError::InvalidMaker,
-        has_one = mint_a @ EscrowError::InvalidMaker
+        has_one = maker @ EscrowError::InvalidMaker,
+        has_one = mint_a @ EscrowError::InvalidMintA
     )]
     pub escrow: Account<'info, Escrow>,
 
@@ -35,7 +35,6 @@ pub struct Refund<'info> {
         associated_token::token_program = token_program
     )]
     pub vault: InterfaceAccount<'info,TokenAccount>,
-
     #[account(
         init_if_needed,
         payer = maker,
@@ -43,7 +42,7 @@ pub struct Refund<'info> {
         associated_token::authority = maker,
         associated_token::token_program = token_program
     )]
-    pub maker_ata_a: InterfaceAccount<'info,AssociatedToken>,
+    pub maker_ata_a: InterfaceAccount<'info,TokenAccount>,
 
     pub associated_token_program: Program<'info, AssociatedToken>,
     pub token_program: Interface<'info, TokenInterface>,
@@ -61,7 +60,6 @@ pub fn handler(ctx: Context<Refund>) ->Result<()> {
         &[escrow.bump],
     ];
     let signer = &[signer_seeds];
-
     if vault_amount > 0 {
         transfer_checked(
             CpiContext::new_with_singer(

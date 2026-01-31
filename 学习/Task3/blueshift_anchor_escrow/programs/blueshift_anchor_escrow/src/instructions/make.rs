@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
     token_interface::{
-        transfer_checked, Mint, TokenInterface, TransferChecked,
+        transfer_checked, Mint, TokenAccount,TokenInterface, TransferChecked,
     },
 };
 
@@ -15,11 +15,11 @@ use crate::{
 #[instruction(seed: u64)]
 pub struct Make<'info>{
     #[account(mut)]
-    pub maker: Singer<'info>,
+    pub maker: Signer<'info>,
     #[account(
         init,
         payer = maker,
-        space = Escrow::INIT_SPACE+ Escrow.DISCRIMINATOR.len(),
+        space = Escrow::INIT_SPACE+ Escrow::DISCRIMINATOR.len(),
         seeds = [b"escrow",maker.key().as_ref(), seed.to_le_bytes().as_ref()],
         bump,
     )]
@@ -28,7 +28,7 @@ pub struct Make<'info>{
         mint::token_program = token_program
     )]
     pub mint_a: InterfaceAccount<'info,Mint>,
-    #[accout(
+    #[account(
         mint::token_program = token_program
     )]
     pub mint_b: InterfaceAccount<'info,Mint>,
@@ -58,7 +58,7 @@ impl<'info> Make<'info> {
      pub fn populate_escrow(&mut self,seed:u64, receive: u64,bump:u8) -> Result<()> {
         self.escrow.seed = seed;
         self.escrow.maker =  self.maker.key();
-        self.sescrow.mint_a = self.mint_a.key();
+        self.escrow.mint_a = self.mint_a.key();
         self.escrow.mint_b = self.mint_b.key();
         self.escrow.receive = receive;
         self.escrow.bump = bump;
