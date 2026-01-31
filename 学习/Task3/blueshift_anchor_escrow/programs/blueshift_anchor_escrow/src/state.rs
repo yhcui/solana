@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-pub const ESCROW_SEED: &[U8] = b"escrow";
+pub const ESCROW_SEED: &[u8] = b"escrow";
 
 #[derive(InitSpace)]
 #[account(discriminator = 1)]

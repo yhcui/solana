@@ -73,7 +73,7 @@ impl<'info> Take<'info>{
             CpiContext::new(
                 self.token_program.to_account_info(),
                 TransferChecked{
-                    from: selft.taker_ata_b.to_account_info(),
+                    from: self.taker_ata_b.to_account_info(),
                     to: self.maker_ata_b.to_account_info(),
                     mint: self.mint_b.to_account_info(),
                     authority: self.taker.to_account_info(),
@@ -93,7 +93,7 @@ impl<'info> Take<'info>{
             &[self.escrow.bump],
         ]]; 
         transfer_checked(
-            CpiContext::new_with_singer(
+            CpiContext::new_with_signer(
                 self.token_program.to_account_info(),
                 TransferChecked {
                     from: self.vault.to_account_info(),
@@ -101,20 +101,20 @@ impl<'info> Take<'info>{
                     mint: self.mint_a.to_account_info(),
                     authority: self.escrow.to_account_info(),
                 },
-                &singer_seeds,
+                &signer_seeds,
             ),
             self.vault.amount,
             self.mint_a.decimals,
         )?;
 
-        close_account(CpiContext::new_with_singer(
+        close_account(CpiContext::new_with_signer(
             self.token_program.to_account_info(),
             CloseAccount {
                 account: self.vault.to_account_info(),
                 authority: self.escrow.to_account_info(),
                 destination: self.maker.to_account_info(),
             },
-            &signer-seeds
+            &signer_seeds
         ))?;
         Ok(())
     }

@@ -62,7 +62,7 @@ pub fn handler(ctx: Context<Refund>) ->Result<()> {
     let signer = &[signer_seeds];
     if vault_amount > 0 {
         transfer_checked(
-            CpiContext::new_with_singer(
+            CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
                 TransferChecked {
                     from: ctx.accounts.vault.to_account_info(),
@@ -77,7 +77,7 @@ pub fn handler(ctx: Context<Refund>) ->Result<()> {
         )?;
     }
 
-    close_account(CpiContext::new_with_singer(
+    close_account(CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
         CloseAccount{
             account: ctx.accounts.vault.to_account_info(),
