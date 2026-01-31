@@ -32,7 +32,7 @@ pub struct Refund<'info> {
         mut,
         associated_token::mint = mint_a,
         associated_token::authority = escrow,
-        associated_token_program = token_program
+        associated_token::token_program = token_program
     )]
     pub vault: InterfaceAccount<'info,TokenAccount>,
 
