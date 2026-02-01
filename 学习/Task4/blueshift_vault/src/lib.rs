@@ -21,7 +21,7 @@ fn process_instruction(
     instruction_data:&[u8],
 ) -> ProgramResult {
     log("Hello, Solana from Pinocchio!");
-    match instruction_data.first() {
+    match instruction_data.split_first() {
         Some((Deposit::DISCRIMINATOR, data)) => Deposit::try_from((data, accounts))?.process(),
         Some((Withdraw::DISCRIMINATOR ,_)) => Withdraw::try_from(accounts)?.process(),
         _ => Err(ProgramError::InvalidInstructionData),

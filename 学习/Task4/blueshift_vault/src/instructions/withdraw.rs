@@ -27,10 +27,8 @@ impl<'a> TryFrom<&'a [AccountView]> for WithdrawAccounts<'a> {
             return Err(ProgramError::InvalidAccountOwner);
         }
 
-        let (vault_key, bump) = Address::find_program_address(
-            &[b"vault", owner.address().as_ref()],
-            &crate::ID,
-        );
+         let (vault_key, bump) =
+            Address::find_program_address(&[b"vault", owner.address().as_ref()], &crate::ID);
 
         if vault.address().ne(&vault_key) {
             return Err(ProgramError::InvalidAccountData);

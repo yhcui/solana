@@ -30,6 +30,10 @@ impl<'a> TryFrom<&'a [AccountView]> for DepositAccounts<'a> {
             &crate::ID,
         );
 
+        if vault.address().ne(&vault_key) {
+            return Err(ProgramError::InvalidAccountData);
+        }
+
         Ok(Self{owner, vault})
     }
 }
