@@ -14,7 +14,7 @@ pub mod instructions;
 
 pub use instructions::*;
 
-declare_id!("A11gcDm7e8Pit4RiunfhtrK1BKU4oYAa3nx54R4YnFgS");
+declare_id!("22222222222222222222222222222222222222222222");
 fn process_instruction(
     _program_id: &Address,
     accounts:&[AccountView],
