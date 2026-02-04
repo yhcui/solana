@@ -141,6 +141,24 @@ impl<'info> Make<'info> {
     pub const DISCRIMINATOR: &'info u8 = &0;
 
     pub fn process(&mut self) -> ProgramResult {
-       
+        let escrow = Escrow::load_mut(self.accounts.escrow)?;
+
+        escrow.set_inner(
+            self.instruction_data.seed,
+            self.accounts.maker.address(),
+            self.accounts.mint_a.address(),
+            self.accounts.mint_b.address(),
+            self.instruction_data.receive.clone(),
+            [self.bump],
+        );
+
+        Transfer{
+            from: self.accounts.maker_ata_a,
+            to: self.accounts.vault,
+            authority: self.accounts.maker,
+            amount: self.instruction_data.amount
+        }.invoke()?;
+
+        Ok(())
     }
 }
