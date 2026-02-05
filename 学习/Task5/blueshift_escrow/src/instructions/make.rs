@@ -27,7 +27,7 @@ impl<'info> TryFrom<&'info [AccountView]> for MakeAccounts<'info> {
     type Error = ProgramError;
 
     fn try_from(accounts: &'info [AccountView]) -> Result<Self, Self::Error> {
-        let [maker, escrow, mint_a, mint_b, maker_ata_a, vault, system_program, token_program] = accounts else {
+        let [maker, escrow, mint_a, mint_b, maker_ata_a, vault, system_program, token_program,_] = accounts else {
             return Err(ProgramError::NotEnoughAccountKeys);
         };
 
@@ -100,7 +100,7 @@ impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> {
                accounts.maker.address().as_ref(),
                 &instruction_data.seed.to_le_bytes(),
             ],
-            &crate::ID
+            &crate::ID,
         );
 
         let seed_binding = instruction_data.seed.to_le_bytes();

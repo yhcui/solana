@@ -15,8 +15,8 @@ pub struct RefundAccount<'info> {
 }
 impl<'info> TryFrom<&'info [AccountView]> for RefundAccount<'info> { 
     type Error = ProgramError;
-    fn try_from(account: &'info [AccountView]) -> Result<Self, Self::Error> {
-        let [maker, escrow, mint_a, vault, maker_ata_a, system_program, token_program] = account else {
+    fn try_from(accounts: &'info [AccountView]) -> Result<Self, Self::Error> {
+        let [maker, escrow, mint_a, vault, maker_ata_a, system_program, token_program,_] = accounts else {
             return Err(ProgramError::NotEnoughAccountKeys);
         };
         SignerAccount::check(maker)?;
@@ -42,7 +42,7 @@ pub struct Refund<'info> {
     pub accounts: RefundAccount<'info>,
 }
 
-impl<'info> TryFrom<&'info [AccountView]> for Refund<'info> {
+impl<'info> TryFrom<&'info [AccountView]> for crate::Refund<'info> {
     type Error = ProgramError;
     fn try_from(accounts: &'info [AccountView]) -> Result<Self, Self::Error> {
         let accounts = RefundAccount::try_from(accounts)?;
@@ -51,10 +51,11 @@ impl<'info> TryFrom<&'info [AccountView]> for Refund<'info> {
             accounts.mint_a,
             accounts.maker,
             accounts.maker, 
+	    accounts.system_program,
             accounts.token_program, 
-            accounts.system_program)?;
+            )?;
         Ok(Self{
-            accounts
+            accounts,
         })
     }
 }
@@ -76,7 +77,7 @@ impl<'info> Refund<'info> {
                 &crate::ID
             )?;
             if &escrow_key != self.accounts.escrow.address() {
-                return Err(ProgramError::InvalidAccountData);
+                return Err(ProgramError::InvalidAccountOwner);
             }
             (escrow.seed, escrow.bump)
         };
@@ -108,7 +109,7 @@ impl<'info> Refund<'info> {
 
         ProgramAccount::close(
             self.accounts.escrow,
-            self.accounts.maker,
+            self.accounts.maker
         )?;
         Ok(())
     }
