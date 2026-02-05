@@ -32,7 +32,7 @@ impl Escrow {
             return Err(ProgramError::InvalidAccountData);
         }
 
-        Ok(unsafe {&mut *core::mem::transmute::<&mut [u8], *mut Self>(bytes.as_mut_ptr())})
+        Ok(unsafe {&mut *core::mem::transmute::<*mut u8, *mut Self>(bytes.as_mut_ptr()) })
     }
 
     #[inline(always)]

@@ -147,7 +147,7 @@ impl<'info> Take<'info> {
             from: self.accounts.taker_ata_b,
             to: self.accounts.maker_ata_b,
             authority: self.accounts.taker,
-            amount,
+            amount:receive,
         }.invoke()?;
 
         ProgramAccount::close(

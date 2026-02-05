@@ -82,11 +82,11 @@ impl<'info> TryFrom<&'info [u8]> for MakeInstructionData {
 
 pub struct Make<'info> {
     pub accounts: MakeAccounts<'info>,
-    pub data: MakeInstructionData,
+    pub instruction_data: MakeInstructionData,
     pub bump: u8,
 }
 
-impl<'info> TryFrom<&'info [u8],&'info [AccountView]> for Make<'info> { 
+impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> { 
     type Error = ProgramError;
     
     fn try_from((data, accounts):(&'info [u8], &'info [AccountView])) -> Result<Self, Self::Error> {
@@ -122,6 +122,7 @@ impl<'info> TryFrom<&'info [u8],&'info [AccountView]> for Make<'info> {
         AssociatedTokenAccount::init(
             accounts.vault,
             accounts.mint_a,
+            accounts.maker,
             accounts.escrow,
             accounts.system_program,
             accounts.token_program,
@@ -139,13 +140,14 @@ impl<'info> Make<'info> {
     pub const DISCRIMINATOR: &'info u8 = &0;
 
     pub fn process(&mut self) -> ProgramResult {
-        let escrow = Escrow::load_mut(self.accounts.escrow)?;
+        let mut data = self.accounts.escrow.try_borrow_mut()?;
+        let escrow = Escrow::load_mut(data.as_mut())?;
 
         escrow.set_inner(
             self.instruction_data.seed,
-            self.accounts.maker.address(),
-            self.accounts.mint_a.address(),
-            self.accounts.mint_b.address(),
+            self.accounts.maker.address().clone(),
+            self.accounts.mint_a.address().clone(),
+            self.accounts.mint_b.address().clone(),
             self.instruction_data.receive.clone(),
             [self.bump],
         );
