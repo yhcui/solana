@@ -94,7 +94,7 @@ impl<'info> TryFrom<&'info [AccountView]> for Take<'info> {
 }
 
 impl<'info> Take<'info> {
-    pub const DISCRIMINATOR: &'info u8 = 1;
+    pub const DISCRIMINATOR: &'info u8 = &1;
     pub fn process(&mut self) -> ProgramResult { 
         let (seed, receive,bump) = {
            let data = self.accounts.escrow.try_borrow()?;
@@ -105,9 +105,11 @@ impl<'info> Take<'info> {
                 self.accounts.maker.address().as_ref(),
                 &escrow.seed.to_le_bytes(),
                 &escrow.bump,
-            ]
+            ],
             &crate::ID
            )?;
+
+            
            if &escrow_key != self.accounts.escrow.address() {
                return Err(ProgramError::InvalidArgument);
            }

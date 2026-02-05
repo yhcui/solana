@@ -94,12 +94,10 @@ impl<'info> TryFrom<&'info [u8],&'info [AccountView]> for Make<'info> {
 
         let instruction_data = MakeInstructionData::try_from(data)?;
 
-        let make_accounts = MakeAccounts::try_from(&accounts[0..accounts.len()-1])?;
-
         let (_, bump) = Address::find_program_address(
             &[
                b"escrow",
-               accounts.maker.key.as_ref(),
+               accounts.maker.address().as_ref(),
                 &instruction_data.seed.to_le_bytes(),
             ],
             &crate::ID
