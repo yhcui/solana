@@ -161,7 +161,36 @@ Mint 账户和 Token Account 的关系：
 Program Account（程序账户）
     由特定程序拥有（如你的 escrow 程序）
     存储程序状态数据
-*/
+
+
+关联代币账户（Associated Token Account，ATA） 和 代币账户（Token Account） 之间存在重要区别：
+
+代币账户（Token Account）：
+1. 基本概念
+    存储特定代币余额的账户
+    由 Token Program 拥有和管理
+    可以是任意地址
+2. 特点
+    地址随机：可以是任意的 32 字节地址
+    独立创建：可以独立于用户钱包创建
+    灵活性高：可以由任何人创建并分配给任何人
+
+关联代币账户（Associated Token Account，ATA）：
+1. 基本概念
+    一种特殊的代币账户
+    与用户的钱包地址确定性关联
+    通过 PDA（Program Derived Address）机制生成    
+    地址确定性：通过派生算法确定，公式为：
+    ATA = find_program_address([wallet_address, token_program, mint], ATA_program)
+    唯一对应：每个钱包地址 + 代币类型组合对应一个 ATA
+    自动发现：可以从钱包地址推导出 ATA 地址
+两者关系：
+1. 包含关系
+代币账户（Token Account）
+  ├── 关联代币账户（ATA） ← 特殊的代币账户
+  └── 普通代币账户    ← 一般代币账户
+ 
+ */
 // =============================================================================
 // SystemAccount - 系统账户验证
 // =============================================================================
