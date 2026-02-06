@@ -39,7 +39,7 @@ pub trait AccountCheck {
 // 验证关联代币账户（ATA）的接口
 //
 // 对应 Anchor 的约束：
-// - associated_token::authority = xxx
+// - associated_token::authority = xxx Authority 授权者
 // - associated_token::mint = xxx
 // - associated_token::token_program = xxx
 //
@@ -120,7 +120,48 @@ impl AccountCheck for SignerAccount {
         Ok(())
     }
 }
+/*
+System Program（系统程序）：
+1. 什么是 System Program
+    内置程序：Solana 区块链内置的核心程序
+    固定地址：Sys...tem（系统程序的固定地址）
+    核心功能：处理基本的账户操作和转账
+2. System Program 的功能
+    创建新账户 (create_account)
+    转移 lamports (transfer)
+    分配空间 (allocate)
+    分配程序 (assign)
+pinocchio_system::ID 是系统程序的固定地址
 
+与普通账户的区别：
+System Account（系统账户）
+    由系统程序拥有
+    通常是普通的钱包地址（如用户的公钥）
+    存储少量数据或仅用于持有 lamports
+Token Account（代币账户）
+    存储具体代币余额的账户
+    由Token程序拥有，存储代币余额、所有者等信息
+    每个Token Account 只能存储一种类型的代币
+    包含：所有者、代币余额、冻结状态等信息
+    由 Token Program 拥有和管理
+Mint 账户
+    代币类型定义：定义一种代币的基本属性
+    全局唯一：每种代币类型只有一个 Mint 账户
+    由 Token Program 拥有：Mint 账户由 Token Program 管理
+    Mint账户属性
+    供应量（Supply）：当前流通的代币总数
+    小数位数（Decimals）：代币的精度（如 USDC 为 6 位小数）
+    铸造权限（Mint Authority）：谁可以铸造新代币
+    冻结权限（Freeze Authority）：谁可以冻结代币账户
+    是否可替换：是否是同质化代币（fungible）
+Mint 账户和 Token Account 的关系：
+1. 一对多关系
+1 个 Mint 账户 → 多个 Token Accounts
+
+Program Account（程序账户）
+    由特定程序拥有（如你的 escrow 程序）
+    存储程序状态数据
+*/
 // =============================================================================
 // SystemAccount - 系统账户验证
 // =============================================================================
@@ -163,8 +204,37 @@ pub const TOKEN_2022_PROGRAM_ID: Address = Address::new_from_array(
     0xb6, 0x1a, 0xfc, 0x4d, 0x83, 0xb9, 0x0d, 0x27, 0xfe, 0xbd, 0xf9, 0x28, 0xd8, 0xa1, 0x8b, 0xfc,
 ]);
 
-// Token-2022 账户中判别器的偏移量
-// Token-2022 在账户数据的第 165 字节存储判别器
+// Token-2022 账户中判别器的偏移量。Token-2022 在账户数据的第 165 字节存储判别器
+/*
+1. 偏移量含义
+数值：165（表示从账户数据的第 165 个字节开始）
+用途：定位 Token-2022 账户中的类型标识符（discriminator）
+
+2. 判别器（Discriminator）
+功能：标识账户的类型（是 Mint 还是 Token Account）
+Token-2022 Mint：值为 0x01
+Token-2022 Token Account：值为 0x02
+
+为什么需要这个偏移量：
+1. Token-2022 扩展性
+    Token-2022 是 Token Program 的升级版本
+    支持更多的扩展功能（如可关闭账户、不可转让等）
+    需要额外的元数据来标识账户类型
+2. 向后兼容
+    旧版 Token Program 账户长度固定
+    Token-2022 账户可能更长（包含扩展）
+    通过判别器区分账户类型
+3. 账户类型识别
+    旧版 Token Account: 长度固定 (不包含判别器)
+    Token-2022 Mint: 长度可能更长，在第165字节处有值0x01
+    Token-2022 Token Account: 长度可能更长，在第165字节处有值0x02
+
+在 escrow 程序中的重要性：
+这个偏移量使程序能够：
+    区分 Token Program 和 Token-2022 账户
+    正确验证不同版本的账户
+    支持两种代币标准的互操作
+*/
 const TOKEN_2022_ACCOUNT_DISCRIMINATOR_OFFSET: usize = 165;
 
 // Token-2022 Mint 账户的判别器值
@@ -206,6 +276,7 @@ impl AccountCheck for MintInterface {
                 }
             }
         } else {
+            // try_borrow() 获取账户数据的只读引用。不获取所有权，而是借用数据的访问权限
             // Token-2022 的 Mint 账户验证
             let data = account.try_borrow()?;
 
