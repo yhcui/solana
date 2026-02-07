@@ -190,24 +190,46 @@ impl<'info> Make<'info> {
     pub const DISCRIMINATOR: &'info u8 = &0;
 
     pub fn process(&mut self) -> ProgramResult {
+
+        // 获取托管账户的可变借用
         let mut data = self.accounts.escrow.try_borrow_mut()?;
-        let escrow = Escrow::load_mut(data.as_mut())?;
 
+        // 将字节数组解析为 Escrow 结构体
+        // unsafe transmute 将字节指针转换为结构体指针
+        let escrow = Escrow::load_mut(data.as_mut())?; // 关键：这是直接内存映射，不是数据复制！
+
+        // 内存映射示意：
+        // [账户原始字节数组] ←→ [Escrow 结构体视图]
+        //        ↑                      ↑
+        //     同一块内存              相同的数据
+        //
+        // 修改 escrow.set_inner(...) 实际上直接修改账户内存
+
+        // *** 数据上链机制（重要）***:
+        // 1. 我们在内存中修改了账户数据（通过 escrow 引用）
+        // 2. 程序返回 Ok(()) 后，Solana 运行时自动：
+        //    - 检测到 escrow 账户被标记为 mut
+        //    - 将内存中的数据持久化到区块链
+        //    - 更新账户状态
+        // 3. 不需要显式调用"保存"函数，自动完成！
+        // 设置托管账户的所有字段
         escrow.set_inner(
-            self.instruction_data.seed,
-            self.accounts.maker.address().clone(),
-            self.accounts.mint_a.address().clone(),
-            self.accounts.mint_b.address().clone(),
-            self.instruction_data.receive.clone(),
-            [self.bump],
+            self.instruction_data.seed,                   // seed：PDA 派生种子
+            self.accounts.maker.address().clone(),        // maker：创建者地址
+            self.accounts.mint_a.address().clone(),       // mint_a：代币 A mint
+            self.accounts.mint_b.address().clone(),       // mint_b：代币 B mint
+            self.instruction_data.receive.clone(),        // receive：期望数量
+            [self.bump],                                 // bump：PDA bump 种子
         );
-
+        // Pinocchio 版本使用 Transfer 指令（不需要 decimals）
+        // 因为 Transfer 指令使用 Token Program 的基本转账功能
+        // 转账代币 A 从创建者 ATA 到金库
         Transfer{
             from: self.accounts.maker_ata_a,
             to: self.accounts.vault,
-            authority: self.accounts.maker,
+            authority: self.accounts.maker, // 权限：创建者必须签名
             amount: self.instruction_data.amount
-        }.invoke()?;
+        }.invoke()?; // 调用 Token Program 执行转账
 
         Ok(())
     }
