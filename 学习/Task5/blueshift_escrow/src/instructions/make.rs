@@ -7,18 +7,57 @@ use crate::{AccountCheck, SignerAccount, MintInterface, AssociatedTokenAccount, 
 pub struct MakeAccounts<'info> {
     pub maker: &'info AccountView,
 
+    // 托管账户（PDA）
+    // *** 重要：这个账户是由客户端预先计算并传入的！***
+    //
+    // 客户端构建交易流程：
+    // 1. 使用相同的 PDA 公式计算 escrow 地址：
+    //    PDA = find_program_address(["escrow", maker, seed], program_id)
+    // 2. 将计算出的地址放在账户列表的第 2 位（索引 1）
+    // 3. 构建交易并发送到区块链
+    //
+    // 程序端接收：
+    // - 从 accounts[1] 获取客户端传入的 escrow 账户
+    // - 重新计算 PDA 验证客户端的计算是否正确
+    // - 使用正确的 bump 创建账户
+    //
+    // 为什么客户端能计算？
+    // - PDA 是确定性的：相同输入 → 相同输出
+    // - 客户端和程序使用相同的种子和程序 ID
+    // - Solana 要求所有非签名账户必须在交易中声明
     pub escrow: &'info AccountView,
 
+    // 代币 A 的 Mint 账户
     pub mint_a: &'info AccountView,
 
+    // 代币 B 的 Mint 账户
     pub mint_b: &'info AccountView,
 
+    // 创建者的代币 A ATA
+    // maker_ata_a 是“maker 的代币 A 的关联代币账户 (Associated Token Account, ATA)”。
+    // 存放创建者（maker）持有的代币 A 的余额，程序从这个账户把代币转到 vault（托管账户）。
     pub maker_ata_a:&'info AccountView,
 
+     // 金库账户（PDA）
+    /*
+    vault 是为代币 A 创建的关联代币账户（ATA），但它的所有者是 escrow 这个 PDA（程序派生地址），所以常说“vault 是 PDA 控制的 token 账户”
+    程序需要一个由合约控制、可以安全存放托管代币的账户。
+    PDA 没有私钥，只有程序能用相同的种子和 bump 在 CPI 时“代签”，这保证只有合约逻辑能从 vault 解锁/转出代币（提高安全性）。
+    这里的 “程序” 指的是智能合约本身，也就是这个 on‑chain program（在代码里是 crate::ID，即 escrow 程序）
+    PDA 是用 seeds + program id 派生出来的地址，PDA 本身没有私钥，属于该 program 的“名下地址”——只有程序运行时可以以该 PDA 的名义签名（通过运行时的 invoke_signed / CPI 机制），外部用户（maker）不能用私钥替它签名。
+    */
     pub vault: &'info AccountView,
 
+    /*
+    System program: 11111111111111111111111111111111，Solana 的内置 System Program。
+    负责创建/分配/转移 lamports、创建账户并给账户赋 owner 等低级账户操作。
+    这里用于创建 PDA 对应的账户或 ATA（需要用 system_program 的 create_account/assign 功能）。
+    两者都是“程序账户”（program id），必须作为交易的 account 参数传入——System 用来创建/分配账户，Token 用来执行 token CPI（比如转账、初始化 token account）。
+    */
     pub system_program: &'info AccountView,
-
+    /*
+     Token program: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA，SPL Token 的运行程序。负责 token 账户初始化、转账、铸币等与 SPL 代币直接相关的操作。代码里用于初始化/操作 vault（token ATA）并执行 Transfer。
+     */
     pub token_program: &'info AccountView,
 
 }
