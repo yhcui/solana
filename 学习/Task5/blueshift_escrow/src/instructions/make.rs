@@ -181,12 +181,14 @@ impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> {
         Ok(Self{
             accounts,
             instruction_data,
-            bump,
+            bump, // 保存 bump 用于后续签名
         })
     }
 }
 
 impl<'info> Make<'info> {
+    // 0 是 u8，而 pub const DISCRIMINATOR: &'info u8 要求的是一个引用类型（&u8），所以写 &0 来得到一个 &u8
+    // 可取地址：&0 是对值 0 的引用（指向常量/只读内存），满足需要借用的 API/签名。
     pub const DISCRIMINATOR: &'info u8 = &0;
 
     pub fn process(&mut self) -> ProgramResult {
