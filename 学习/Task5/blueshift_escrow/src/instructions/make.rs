@@ -56,7 +56,9 @@ pub struct MakeAccounts<'info> {
     */
     pub system_program: &'info AccountView,
     /*
-     Token program: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA，SPL Token 的运行程序。负责 token 账户初始化、转账、铸币等与 SPL 代币直接相关的操作。代码里用于初始化/操作 vault（token ATA）并执行 Transfer。
+     Token program: TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA，SPL Token 的运行程序。
+     负责 token 账户初始化、转账、铸币等与 SPL 代币直接相关的操作。
+     代码里用于初始化/操作 vault（token ATA）并执行 Transfer。
      */
     pub token_program: &'info AccountView,
 
@@ -124,10 +126,19 @@ pub struct Make<'info> {
     pub instruction_data: MakeInstructionData,
     pub bump: u8,
 }
-
+/*
+(&'info [u8], &'info [AccountView]) 是一个二维元组类型（长度为2的 tuple）
+*/
 impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> { 
     type Error = ProgramError;
-    
+    /*
+        左边 (data, accounts) 是模式（把传入的 tuple 解构为两个变量），右边 (&'info [u8], &'info [AccountView]) 是该参数的类型（一个包含两项的 tuple）。中间的 : 把模式和类型分开。
+        等价写法（不解构）：
+        let tuple: (&[u8], &[AccountView]) = ...;
+        let data = tuple.0; let accounts = tuple.1;
+        <'info> 是生命周期，表示两个借用都在同一生命周期内有效。
+        用解构的好处：直接命名两个元素，代码更简洁，避免在函数体内再写 .0/.1。
+    */
     fn try_from((data, accounts):(&'info [u8], &'info [AccountView])) -> Result<Self, Self::Error> {
         let accounts = MakeAccounts::try_from(accounts)?; 
 

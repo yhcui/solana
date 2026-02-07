@@ -408,6 +408,13 @@ impl AssociatedTokenAccountCheck for AssociatedTokenAccount {
         // 先验证账户是否是有效的 Token Account
         TokenAccountInterface::check(account)?;
 
+        /*
+        as_ref() 来自 AsRef trait，把一个值借用为某种引用类型（例如 Address -> &[u8] 或 &[u8;32]）。
+        在代码中：
+            authority.address().as_ref() 把 Address（封装的公钥）转换为字节切片引用，正好符合 PDA 种子或 API（比如 find_program_address）需要 &[u8] 的参数类型。
+        为什么用：
+            1) 符合函数签名（需要引用字节）；2) 不发生复制，效率高；3) 泛型/接口友好（AsRef 是通用转换）。
+         */
         // 计算 ATA 的 PDA 地址
         // ATA 的派生种子：[authority, token_program, mint]
         let (pda, _bump) = Address::find_program_address(
