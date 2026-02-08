@@ -152,30 +152,44 @@ impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> {
             ],
             &crate::ID,
         );
-
+        
+        // 是将数值以小端序编码为字节数组
         let seed_binding = instruction_data.seed.to_le_bytes();
         let bump_binding = [bump];
+        /*
+        两个 .as_ref() 的作用分别是：
+        将 Address 转换为 &[u8]。
+        将 &[u8] 转换为 &&[u8]，以满足 Seed::from 的参数要求。
+        */
         let escrow_seeds=[
-            Seed::from(b"escrow"),
+            Seed::from(b"escrow"), // 将字符串字面量 "escrow" 转换为 Seed 类型，用于生成程序派生地址（PDA, Program Derived Address）的种子（seeds）。
             Seed::from(accounts.maker.address().as_ref().as_ref()),
-            Seed::from(&seed_binding),
-            Seed::from(&bump_binding),
+            Seed::from(&seed_binding), // 指令数据中的 seed 值（已转换为字节数组）。
+            Seed::from(&bump_binding), // PDA 的 bump 值（用于唯一性校验）。
         ];
-
+        /*
+        初始化一个程序派生地址（PDA）账户，并将其与Escrow结构体关联起来。
+        为Escrow类型创建一个新的账户，并将其绑定到指定的PDA地址。
+        通过 ProgramAccount::init 方法，将 escrow 账户初始化为 Escrow 类型。
+        */
         ProgramAccount::init::<Escrow>(
-            accounts.maker,
-            accounts.escrow,
-            &escrow_seeds,
-            Escrow::LEN,
+            accounts.maker, // 创建者账户（通常是交易的签名者）。
+            accounts.escrow, // 目标 PDA 账户（由客户端预先计算并传入）。
+            &escrow_seeds, // 用于生成 PDA 的种子数组。
+            Escrow::LEN, // Escrow 结构体所需的账户大小（以字节为单位）。
         )?;
-
+        
+        /*
+        为代币A创建一个关联代币账户（Associated Token Account, ATA），并将其所有者设置为托管账户（escrow）
+        初始化一个 ATA（关联代币账户），用于存储代币 A，并将其所有权赋予 escrow（PDA）。
+        */
         AssociatedTokenAccount::init(
-            accounts.vault,
-            accounts.mint_a,
-            accounts.maker,
-            accounts.escrow,
-            accounts.system_program,
-            accounts.token_program,
+            accounts.vault, //目标 ATA 账户（将被初始化）。
+            accounts.mint_a, // 代币 A 的 Mint 账户（定义代币类型）。
+            accounts.maker, // 创建者账户（通常是交易的签名者）。
+            accounts.escrow, // 托管账户（PDA），将成为 ATA 的所有者。
+            accounts.system_program, // System Program，用于创建账户。
+            accounts.token_program, // Token Program，用于初始化 ATA。
         )?;
 
         Ok(Self{
