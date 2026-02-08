@@ -143,14 +143,20 @@ impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> {
         let accounts = MakeAccounts::try_from(accounts)?; 
 
         let instruction_data = MakeInstructionData::try_from(data)?;
-
+        
+        /*
+        根据指定的种子（seeds）和程序 ID（crate::ID），计算出合法的 PDA 地址及其对应的 bump 值。
+        它返回两个值：
+            PDA 地址（未使用，用 _ 忽略）。
+            bump 值：一个 1 字节的随机数，用于确保生成的地址不在 Ed25519 曲线上（即不是普通公钥）。
+        */
         let (_, bump) = Address::find_program_address(
             &[
                b"escrow",
                accounts.maker.address().as_ref(),
                 &instruction_data.seed.to_le_bytes(),
             ],
-            &crate::ID,
+            &crate::ID, // 即当前程序的 ID。
         );
         
         // 是将数值以小端序编码为字节数组
