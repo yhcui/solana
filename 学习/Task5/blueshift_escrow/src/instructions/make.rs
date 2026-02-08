@@ -127,6 +127,36 @@ pub struct Make<'info> {
     pub bump: u8,
 }
 /*
+这段代码前面已经检查了账户信息，为什么后面还有程序账户和关联账户初始化操作，检查前不应该已经建立并初始化了么？
+
+主要原因
+1、检查 vs 初始化的目的不同
+
+检查阶段：验证传入的账户是否符合预期的类型和状态
+初始化阶段：实际创建新账户或将现有账户配置为特定用途
+2、账户生命周期的不同阶段
+检查阶段 (MakeAccounts::try_from)
+初始化阶段
+
+关键点：
+客户端虽然计算了 PDA 地址并传入，但这个账户在链上还不存在
+ProgramAccount::init 实际上是在链上创建这个账户，并分配存储空间
+将账户的所有者设置为当前程序（crate::ID）
+
+为什么需要客户端计算，不让前端传不就很好么。在合约里自己做了？
+核心原因：Solana 的账户模型限制
+1. 交易构建的必要性
+
+2. 账户声明规则
+Solana 要求交易中所有涉及的账户都必须预先声明
+程序无法在运行时"动态创建"并立即使用账户
+账户必须在交易构建阶段就确定下来
+
+实际优势
+安全性：双重验证防止地址计算错误
+确定性：相同输入始终产生相同地址
+可预测性：前端可以预知将要使用的地址
+兼容性：符合 Solana 的账户模型设计
 (&'info [u8], &'info [AccountView]) 是一个二维元组类型（长度为2的 tuple）
 */
 impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> { 
@@ -174,6 +204,7 @@ impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> {
             Seed::from(&bump_binding), // PDA 的 bump 值（用于唯一性校验）。
         ];
         /*
+        初始化 Escrow PDA 账户
         初始化一个程序派生地址（PDA）账户，并将其与Escrow结构体关联起来。
         为Escrow类型创建一个新的账户，并将其绑定到指定的PDA地址。
         通过 ProgramAccount::init 方法，将 escrow 账户初始化为 Escrow 类型。
@@ -186,7 +217,7 @@ impl<'info> TryFrom<(&'info [u8],&'info [AccountView])> for Make<'info> {
         )?;
         
         /*
-        为代币A创建一个关联代币账户（Associated Token Account, ATA），并将其所有者设置为托管账户（escrow）
+        初始化 Vault ATA 账户
         初始化一个 ATA（关联代币账户），用于存储代币 A，并将其所有权赋予 escrow（PDA）。
         */
         AssociatedTokenAccount::init(
