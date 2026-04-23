@@ -1,0 +1,22 @@
+# Cargo 工作区配置
+# Solana 程序通常使用 workspace 来管理主程序和 CPI 依赖的程序
+[workspace]
+members = [
+    "programs/*"  # 包含 programs 目录下所有子目录（即 voting 程序）
+]
+resolver = "2"
+
+# Release 构建配置：Solana 程序部署时需要优化
+[profile.release]
+# 启用溢出检查，防止整数溢出导致的安全问题
+overflow-checks = true
+# 启用完整的链接时优化（LTO），减小程序体积以符合 Solana 的交易大小限制
+lto = "fat"
+# 单代码生成单元，确保优化效果最大化
+codegen-units = 1
+
+# 覆盖构建依赖的 profile（如 anchor-lang 本身）
+[profile.release.build-override]
+opt-level = 3
+incremental = false
+codegen-units = 1

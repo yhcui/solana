@@ -1,0 +1,45 @@
+# Anchor 工具链配置
+# 指定使用的 Anchor CLI 版本，确保团队成员使用相同版本
+[toolchain]
+anchor_version = "1.0.0-rc.2"
+
+[features]
+# 启用依赖解析
+resolution = true
+# 跳过 lint 检查
+skip-lint = false
+
+# 本地网络（localnet）部署的程序配置
+[programs.localnet]
+voting = "65KHV8cXwJ8apTKMqnpSdhdHkHhRySatgKMwnxm6C3gG"
+
+# Anchor 程序注册表
+[registry]
+url = "https://api.apr.dev"
+
+# Provider 配置：定义默认的集群和钱包
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+# 脚本配置：定义可通过 `anchor run <script>` 执行的命令
+[scripts]
+test = "yarn jest"
+
+# 钩子：可在构建/测试等阶段前后执行自定义命令
+[hooks]
+
+# 测试配置
+[test]
+# 测试验证器启动后的等待时间（毫秒）
+startup_wait = 5000
+# 测试验证器关闭后的等待时间（毫秒）
+shutdown_wait = 2000
+# 是否使用可升级部署模式
+upgradeable = false
+
+# 本地测试验证器配置
+[test.validator]
+bind_address = "127.0.0.1"
+ledger = ".anchor/test-ledger"
+rpc_port = 8899

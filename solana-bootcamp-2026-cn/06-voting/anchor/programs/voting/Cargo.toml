@@ -1,0 +1,37 @@
+[package]
+name = "voting"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+# cdylib 用于生成 BPF/SBPF 共享库（Solana 程序格式），lib 用于单元测试
+crate-type = ["cdylib", "lib"]
+name = "voting"
+
+[features]
+default = []
+# cpi: 允许跨程序调用（Cross-Program Invocation），关闭入口点
+cpi = ["no-entrypoint"]
+# 不生成入口点（用于 CPI 模式）
+no-entrypoint = []
+# 不生成 IDL（Interface Definition Language）
+no-idl = []
+# 不在日志中打印指令名称
+no-log-ix-name = []
+# 生成 IDL 所需的构建特性
+idl-build = ["anchor-lang/idl-build"]
+# 调试模式，启用额外的 Anchor 日志
+anchor-debug = []
+# 自定义堆分配器（Solana 程序通常使用自定义堆以减少开销）
+custom-heap = []
+# 自定义 panic 处理
+custom-panic = []
+
+[dependencies]
+# Anchor 框架，启用 init-if-needed 特性以支持 init_if_needed 约束
+anchor-lang = { version = "1.0.0-rc.2", features = ["init-if-needed"] }
+
+[lints.rust]
+# 允许 cfg(target_os = "solana") 配置（Anchor 内部使用）
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
