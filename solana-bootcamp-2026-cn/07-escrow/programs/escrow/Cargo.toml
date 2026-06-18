@@ -1,0 +1,63 @@
+# ============================================================
+# 链上程序包配置 —— programs/escrow/Cargo.toml
+# ============================================================
+# 这个文件定义了 Solana 链上程序（智能合约）本身的 Rust 包信息。
+
+[package]
+name = "escrow"           # 包名，对应程序名称
+version = "0.1.0"         # 版本号
+description = "Created with Anchor"  # 描述信息
+edition = "2021"          # Rust 2021 版本（需要与 rust-toolchain.toml 配合）
+
+[lib]
+# crate-type 决定了编译输出的格式：
+# - "cdylib"：编译为动态库（.so），这是 Solana BPF 程序必须的格式
+# - "lib"：编译为静态库，方便其他 Rust 程序依赖和调用
+crate-type = ["cdylib", "lib"]
+name = "escrow"
+
+# ============================================================
+# 功能开关（Features）—— 控制编译时的行为
+# ============================================================
+
+[features]
+default = []
+# cpi = 允许其他程序通过 CPI（跨程序调用）调用本程序的指令
+# 开启后关闭入口点（no-entrypoint），因为 CPI 调用不需要独立的入口
+cpi = ["no-entrypoint"]
+no-entrypoint = []        # 关闭程序入口点（被 cpi 依赖时使用）
+no-idl = []               # 不生成 IDL（接口描述文件，通常用于减小编译体积）
+no-log-ix-name = []       # 不打印指令名称日志（减少日志输出，节省计算单元）
+# idl-build = 生成 IDL 文件，前端和测试需要它来了解程序的接口
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+anchor-debug = []         # 开启 Anchor 调试模式，输出更多调试信息
+custom-heap = []          # 使用自定义堆内存分配器（优化链上程序的内存使用）
+custom-panic = []         # 使用自定义 panic 处理（减小 panic 时的代码体积）
+
+
+# ============================================================
+# 依赖项（Dependencies）—— Solana 链上程序的核心库
+# ============================================================
+
+[dependencies]
+# Anchor 框架 —— Solana 开发的"脚手架"，提供：
+# - 声明式账户定义（#[account(...)] 约束）
+# - 自动反序列化/序列化
+# - 错误处理宏（require!、require_keys_neq! 等）
+# - IDL 自动生成
+# features = ["init-if-needed"] 启用条件创建账户功能（init_if_needed 约束）
+anchor-lang = { version = "1.0.0-rc.2", features = ["init-if-needed"] }
+# Anchor SPL 库 —— 封装了 Solana Program Library 的 CPI 调用：
+# - Token 转账、Mint 操作、ATA 创建、账户关闭等
+# - 兼容 SPL Token 和 Token-2022 两种程序标准
+anchor-spl = "1.0.0-rc.2"
+
+
+# ============================================================
+# Lint 配置 —— 解决编译警告
+# ============================================================
+
+[lints.rust]
+# 允许在代码中使用 `cfg(target_os = "solana")` 条件编译，
+# 否则 Rust 编译器会警告 "unexpected_cfgs"（因为 solana 不是标准的 target_os 值）
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }
